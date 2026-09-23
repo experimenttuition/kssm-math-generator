@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>KSSM Full Syllabus Math Generator</title>
+  <title>Complete KSSM Math Generator (Forms 1–5)</title>
   <!-- KaTeX for math rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
 
   <style>
-    body { font-family: Arial, sans-serif; max-width: 650px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
     .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
     .filter-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
     select, button, input { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
@@ -27,7 +27,7 @@
 <body>
 
   <div class="card">
-    <h2>KSSM Math Generator</h2>
+    <h2>Complete KSSM Math Generator</h2>
     
     <div class="filter-group">
       <label for="formSelect">Form:</label>
@@ -58,10 +58,46 @@
   </div>
 
   <script>
-    // FULL SYLLABUS DATA STRUCTURE
     const Syllabus = {
       form1: {
-        linear: {
+        ch1: {
+          title: "Ch 1: Rational Numbers",
+          type: "numeric",
+          generate: () => {
+            const a = Math.floor(Math.random() * 20) - 10;
+            const b = Math.floor(Math.random() * 10) + 1;
+            const c = Math.floor(Math.random() * 10) + 1;
+            return { latex: `Evaluate:\\ \\ ${a} + (${b} \\times ${c})`, answer: a + (b * c) };
+          }
+        },
+        ch2: {
+          title: "Ch 2: Factors and Multiples (LCM)",
+          type: "numeric",
+          generate: () => {
+            const a = 4, b = 6;
+            return { latex: `Find\\ the\\ Least\\ Common\\ Multiple\\ (LCM)\\ of\\ ${a}\\ and\\ ${b}.`, answer: 12 };
+          }
+        },
+        ch3: {
+          title: "Ch 3: Squares and Square Roots",
+          type: "numeric",
+          generate: () => {
+            const x = Math.floor(Math.random() * 12) + 1;
+            return { latex: `Evaluate:\\ \\ \\sqrt{${x * x}}`, answer: x };
+          }
+        },
+        ch4: {
+          title: "Ch 4: Ratios, Rates and Proportions",
+          type: "numeric",
+          generate: () => {
+            const x = Math.floor(Math.random() * 5) + 2;
+            const a = Math.floor(Math.random() * 5) + 1;
+            const b = a * x;
+            const c = Math.floor(Math.random() * 5) + 1;
+            return { latex: `If\\ \\ ${a} : ${c} = ${b} : x,\\ \\ find\\ x.`, answer: c * x };
+          }
+        },
+        ch6: {
           title: "Ch 6: Linear Equations",
           type: "numeric",
           generate: () => {
@@ -70,22 +106,64 @@
             const b = Math.floor(Math.random() * 10) + 1;
             return { latex: `Solve:\\ \\ ${a}x + ${b} = ${a * x + b}`, answer: x };
           }
+        },
+        ch10: {
+          title: "Ch 10: Perimeter and Area",
+          type: "numeric",
+          generate: () => {
+            const l = Math.floor(Math.random() * 10) + 2;
+            const w = Math.floor(Math.random() * 8) + 2;
+            return { latex: `Find\\ area\\ of\\ rectangle\\ with\\ l = ${l}\\ cm\\ and\\ w = ${w}\\ cm.`, answer: l * w };
+          }
         }
       },
+
       form2: {
-        pythagoras: {
+        ch2: {
+          title: "Ch 2: Expansion of Algebraic Expressions",
+          type: "mcq",
+          generate: () => {
+            const a = Math.floor(Math.random() * 5) + 2;
+            const b = Math.floor(Math.random() * 5) + 1;
+            return {
+              latex: `Expand:\\ \\ ${a}(x + ${b})`,
+              answer: `${a}x + ${a * b}`,
+              options: [`${a}x + ${a * b}`, `${a}x + ${b}`, `${a}x - ${a * b}`, `x + ${a * b}`]
+            };
+          }
+        },
+        ch3: {
+          title: "Ch 3: Algebraic Formulae",
+          type: "numeric",
+          generate: () => {
+            const u = Math.floor(Math.random() * 10) + 1;
+            const a = Math.floor(Math.random() * 5) + 1;
+            const t = 2;
+            return { latex: `Given\\ v = u + at.\\ Find\\ v\\ when\\ u = ${u},\\ a = ${a},\\ t = ${t}.`, answer: u + (a * t) };
+          }
+        },
+        ch7: {
+          title: "Ch 7: Circles (Circumference)",
+          type: "numeric",
+          generate: () => {
+            const r = (Math.floor(Math.random() * 4) + 1) * 7;
+            return { latex: `Find\\ circumference\\ of\\ circle\\ r = ${r}\\ cm.\\ (Use\\ \\pi = \\frac{22}{7})`, answer: 2 * (22 / 7) * r };
+          }
+        },
+        ch13: {
           title: "Ch 13: Pythagoras Theorem",
           type: "numeric",
           generate: () => {
             const triples = [[3,4,5], [5,12,13], [6,8,10], [8,15,17]];
             const [a, b, c] = triples[Math.floor(Math.random() * triples.length)];
-            return { latex: `A\\ right\\ triangle\\ has\\ sides\\ a=${a}\\ and\\ b=${b}.\\ Find\\ hypotenuse\\ c.`, answer: c };
+            return { latex: `Right\\ triangle\\ legs\\ a=${a}\\ and\\ b=${b}.\\ Find\\ hypotenuse\\ c.`, answer: c };
           }
         }
       },
+
       form3: {
-        indices: {
-          title: "Ch 1: Indices (a^m × a^n)",
+        ch1: {
+          title: "Ch 1: Indices (Laws of Multiplication)",
           type: "numeric",
           generate: () => {
             const base = Math.floor(Math.random() * 4) + 2;
@@ -93,10 +171,44 @@
             const n = Math.floor(Math.random() * 4) + 2;
             return { latex: `Simplify:\\ \\ ${base}^{${m}} \\times ${base}^{${n}} = ${base}^x \\quad (Find\\ x)`, answer: m + n };
           }
+        },
+        ch2: {
+          title: "Ch 2: Standard Form",
+          type: "mcq",
+          generate: () => {
+            const a = Math.floor(Math.random() * 9) + 1;
+            const b = Math.floor(Math.random() * 9) + 1;
+            const p = Math.floor(Math.random() * 3) + 2;
+            const num = (a + b / 10) * Math.pow(10, p);
+            const ans = `${a}.${b} \\times 10^{${p}}`;
+            return {
+              latex: `Express\\ ${num}\\ in\\ standard\\ form.`,
+              answer: ans,
+              options: [ans, `${a}${b} \\times 10^{${p - 1}}`, `${a}.${b} \\times 10^{${p + 1}}`, `0.${a}${b} \\times 10^{${p + 1}}`]
+            };
+          }
+        },
+        ch3: {
+          title: "Ch 3: Consumer Math (Savings & Interest)",
+          type: "numeric",
+          generate: () => {
+            const p = 1000;
+            const r = Math.floor(Math.random() * 3) + 2; // rate %
+            const t = 2; // years
+            return { latex: `Find\\ simple\\ interest\\ for\\ Principal = RM${p},\\ Rate = ${r}\\%,\\ Time = ${t}\\ years.`, answer: (p * r * t) / 100 };
+          }
+        },
+        ch5: {
+          title: "Ch 5: Trigonometric Ratios (Tangent)",
+          type: "numeric",
+          generate: () => {
+            return { latex: `In\\ a\\ right\\ triangle,\\ opposite = 3\\ and\\ adjacent = 4.\\ Find\\ \\tan(\\theta)\\ as\\ a\\ decimal.`, answer: 0.75 };
+          }
         }
       },
+
       form4: {
-        quadratic: {
+        ch1: {
           title: "Ch 1: Quadratic Equations",
           type: "mcq",
           generate: () => {
@@ -109,25 +221,61 @@
             };
           }
         },
-        bases: {
+        ch2: {
           title: "Ch 2: Number Bases (Base 10 to Base 2)",
           type: "numeric",
           generate: () => {
             const num10 = Math.floor(Math.random() * 20) + 5;
             return { latex: `Convert\\ ${num10}_{10}\\ to\\ Base\\ 2.`, answer: parseInt(num10.toString(2)) };
           }
+        },
+        ch3: {
+          title: "Ch 3: Consumer Math (Insurance)",
+          type: "numeric",
+          generate: () => {
+            const loss = 5000;
+            const deductible = 1000;
+            return { latex: `Property\\ loss = RM${loss}.\\ Deductible = RM${deductible}.\\ Calculate\\ insurance\\ payout.`, answer: loss - deductible };
+          }
+        },
+        ch8: {
+          title: "Ch 8: Measures of Dispersion (Range)",
+          type: "numeric",
+          generate: () => {
+            const nums = [12, 45, 23, 89, 34];
+            return { latex: `Find\\ the\\ range\\ of\\ data:\\ 12,\\ 45,\\ 23,\\ 89,\\ 34.`, answer: 89 - 12 };
+          }
         }
       },
+
       form5: {
-        matrices: {
+        ch1: {
+          title: "Ch 1: Variation (Direct Variation)",
+          type: "numeric",
+          generate: () => {
+            const k = Math.floor(Math.random() * 5) + 2;
+            const x = Math.floor(Math.random() * 5) + 1;
+            return { latex: `y\\ \\propto\\ x\\ with\\ constant\\ k = ${k}.\\ Find\\ y\\ when\\ x = ${x}.`, answer: k * x };
+          }
+        },
+        ch2: {
           title: "Ch 2: Matrices (Determinant)",
           type: "numeric",
           generate: () => {
-            const a = Math.floor(Math.random() * 5) + 1;
-            const b = Math.floor(Math.random() * 5) + 1;
-            const c = Math.floor(Math.random() * 5) + 1;
-            const d = Math.floor(Math.random() * 5) + 1;
+            const a = Math.floor(Math.random() * 4) + 1;
+            const b = Math.floor(Math.random() * 4) + 1;
+            const c = Math.floor(Math.random() * 4) + 1;
+            const d = Math.floor(Math.random() * 4) + 1;
             return { latex: `Find\\ determinant\\ of\\ \\begin{pmatrix} ${a} & ${b} \\\\ ${c} & ${d} \\end{pmatrix}`, answer: (a*d) - (b*c) };
+          }
+        },
+        ch4: {
+          title: "Ch 4: Consumer Math (Taxation)",
+          type: "numeric",
+          generate: () => {
+            const income = 40000;
+            const relief = 9000;
+            return { latex: `Chargeable\\ Income = RM${income} - RM${relief}.\\ Calculate\\ Chargeable\\ Income.`, answer: income - relief };
           }
         }
       }
