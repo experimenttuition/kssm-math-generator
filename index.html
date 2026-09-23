@@ -60,7 +60,7 @@
     <div class="question-box" id="questionBox">Select a topic to start!</div>
 
     <div id="numericInputArea">
-      <input type="number" id="userAnswer" placeholder="Enter your answer" />
+      <input type="number" step="any" id="userAnswer" placeholder="Enter your answer" />
       <button onclick="submitNumericAnswer()">Submit Answer</button>
     </div>
 
@@ -86,7 +86,6 @@
     let answeredCurrent = false;
     let currentQuestion = null;
 
-    // HELPER FUNCTIONS FOR UNLIMITED DYNAMIC GENERATION
     function getRandomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -145,7 +144,6 @@
           title: "Ch 13: Pythagoras Theorem",
           type: "numeric",
           generate: () => {
-            // Infinite Pythagorean Triple generation using Euclid's formula
             const m = getRandomInt(2, 6);
             const n = getRandomInt(1, m - 1);
             const a = m * m - n * n;
@@ -174,6 +172,44 @@
               working: `1.\\ \\text{Use rule } a^m \\times a^n = a^{m+n}\\\\ 2.\\ \\text{Add powers: } x = ${m} + ${n} = ${m + n}`
             };
           }
+        },
+        ch5_trigo: {
+          title: "Ch 5: Trigonometry (Sin, Cos, Tan)",
+          type: "numeric",
+          generate: () => {
+            const triples = [
+              { opp: 3, adj: 4, hyp: 5 },
+              { opp: 5, adj: 12, hyp: 13 },
+              { opp: 8, adj: 15, hyp: 17 }
+            ];
+            const t = triples[getRandomInt(0, triples.length - 1)];
+            const funcs = ['sin', 'cos', 'tan'];
+            const selectedFunc = funcs[getRandomInt(0, 2)];
+
+            let ans = 0;
+            let formulaStr = '';
+            let subStr = '';
+
+            if (selectedFunc === 'sin') {
+              ans = parseFloat((t.opp / t.hyp).toFixed(2));
+              formulaStr = `\\sin(\\theta) = \\frac{\\text{Opposite}}{\\text{Hypotenuse}}`;
+              subStr = `\\frac{${t.opp}}{${t.hyp}} = ${ans}`;
+            } else if (selectedFunc === 'cos') {
+              ans = parseFloat((t.adj / t.hyp).toFixed(2));
+              formulaStr = `\\cos(\\theta) = \\frac{\\text{Adjacent}}{\\text{Hypotenuse}}`;
+              subStr = `\\frac{${t.adj}}{${t.hyp}} = ${ans}`;
+            } else {
+              ans = parseFloat((t.opp / t.adj).toFixed(2));
+              formulaStr = `\\tan(\\theta) = \\frac{\\text{Opposite}}{\\text{Adjacent}}`;
+              subStr = `\\frac{${t.opp}}{${t.adj}} = ${ans}`;
+            }
+
+            return {
+              latex: `\\text{In a right triangle, Opposite } = ${t.opp},\\text{ Adjacent } = ${t.adj},\\text{ and Hypotenuse } = ${t.hyp}.\\\\ \\text{Calculate } \\mathbf{\\${selectedFunc}(\\theta)} \\text{ as a decimal (2 d.p.).}`,
+              answer: ans,
+              working: `1.\\ \\text{Formula: } ${formulaStr}\\\\ 2.\\ \\text{Substitute values: } ${subStr}\\\\ 3.\\ \\text{Answer: } ${ans}`
+            };
+          }
         }
       },
 
@@ -191,6 +227,30 @@
               answer: `${r1}, ${r2}`,
               options: [`${r1}, ${r2}`, `-${r1}, ${r2}`, `${r1}, -${r2}`, `-${r1}, -${r2}`],
               working: `1.\\ \\text{Factorise: } (x - ${r1})(x - ${r2}) = 0\\\\ 2.\\ \\text{Solve roots: } x = ${r1}\\ \\text{or } x = ${r2}`
+            };
+          }
+        },
+        ch2_number_bases: {
+          title: "Ch 2: Number Bases (Base 10 to Base 2)",
+          type: "numeric",
+          generate: () => {
+            const num10 = getRandomInt(10, 60);
+            const num2Str = num10.toString(2);
+            const ans = parseInt(num2Str);
+
+            let temp = num10;
+            let steps = [];
+            while (temp > 0) {
+              let rem = temp % 2;
+              let quot = Math.floor(temp / 2);
+              steps.push(`${temp} \\div 2 = ${quot} \\quad \\text{remainder } ${rem}`);
+              temp = quot;
+            }
+
+            return {
+              latex: `\\text{Convert the number } \\mathbf{${num10}_{10}} \\text{ to a number in Base 2.}`,
+              answer: ans,
+              working: `1.\\ \\text{Perform successive division by 2:}\\\\ \\quad ${steps.join('\\\\ \\quad ')}\\\\ 2.\\ \\text{Read remainders from bottom to top.}\\\\ 3.\\ \\text{Answer: } ${num2Str}_2`
             };
           }
         },
@@ -370,7 +430,6 @@
         updateScoreBoard();
         showWorking();
 
-        // RESET SCORE EVERY 10 QUESTIONS
         if (total === 10) {
           setTimeout(() => {
             document.getElementById('resetAlert').style.display = 'block';
