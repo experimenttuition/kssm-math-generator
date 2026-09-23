@@ -11,23 +11,34 @@
   <style>
     body { font-family: Arial, sans-serif; max-width: 700px; margin: 30px auto; padding: 20px; background: #f0f2f5; }
     .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .score-board { display: flex; justify-content: space-between; background: #e9ecef; padding: 10px 15px; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
     .filter-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
     select, button, input { width: 100%; padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
     button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
     button:hover { background: #0056b3; }
     .btn-refresh { background: #28a745; }
     .btn-refresh:hover { background: #1e7e34; }
+    .btn-solution { background: #6c757d; }
+    .btn-solution:hover { background: #5a6268; }
     .question-box { font-size: 20px; margin: 25px 0; text-align: center; min-height: 60px; }
     .mcq-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
     .mcq-btn { background: #f8f9fa; color: #333; border: 1px solid #ccc; }
     .mcq-btn:hover { background: #e2e6ea; }
     .feedback { font-weight: bold; margin-top: 15px; text-align: center; }
+    .working-steps { margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px; display: none; }
+    .working-steps h4 { margin-top: 0; color: #007bff; }
   </style>
 </head>
 <body>
 
   <div class="card">
     <h2>Complete KSSM Math Practices</h2>
+
+    <!-- Score Counter -->
+    <div class="score-board">
+      <span>Score: <span id="score">0</span> / <span id="total">0</span></span>
+      <span>Accuracy: <span id="accuracy">0</span>%</span>
+    </div>
     
     <div class="filter-group">
       <label for="formSelect">Form:</label>
@@ -47,17 +58,30 @@
 
     <div id="numericInputArea">
       <input type="number" id="userAnswer" placeholder="Enter your answer" />
-      <button onclick="checkAnswer(parseFloat(document.getElementById('userAnswer').value))">Submit</button>
+      <button onclick="checkAnswer(parseFloat(document.getElementById('userAnswer').value))">Submit Answer</button>
     </div>
 
     <div id="mcqArea" class="mcq-options" style="display:none;"></div>
 
-    <button onclick="generateQuestion()" class="btn-refresh">New Question ↻</button>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="toggleWorking()" class="btn-solution">Show Working Step 💡</button>
+      <button onclick="generateQuestion()" class="btn-refresh">Next Question ↻</button>
+    </div>
 
     <div class="feedback" id="feedback"></div>
+
+    <!-- Working Step Area -->
+    <div class="working-steps" id="workingArea">
+      <h4>Step-by-Step Solution:</h4>
+      <div id="workingContent"></div>
+    </div>
   </div>
 
   <script>
+    let score = 0;
+    let total = 0;
+    let answeredCurrent = false;
+
     const Syllabus = {
       form1: {
         ch1: {
@@ -67,34 +91,12 @@
             const a = Math.floor(Math.random() * 20) - 10;
             const b = Math.floor(Math.random() * 10) + 1;
             const c = Math.floor(Math.random() * 10) + 1;
-            return { latex: `Evaluate:\\ \\ ${a} + (${b} \\times ${c})`, answer: a + (b * c) };
-          }
-        },
-        ch2: {
-          title: "Ch 2: Factors and Multiples (LCM)",
-          type: "numeric",
-          generate: () => {
-            const a = 4, b = 6;
-            return { latex: `Find\\ the\\ Least\\ Common\\ Multiple\\ (LCM)\\ of\\ ${a}\\ and\\ ${b}.`, answer: 12 };
-          }
-        },
-        ch3: {
-          title: "Ch 3: Squares and Square Roots",
-          type: "numeric",
-          generate: () => {
-            const x = Math.floor(Math.random() * 12) + 1;
-            return { latex: `Evaluate:\\ \\ \\sqrt{${x * x}}`, answer: x };
-          }
-        },
-        ch4: {
-          title: "Ch 4: Ratios, Rates and Proportions",
-          type: "numeric",
-          generate: () => {
-            const x = Math.floor(Math.random() * 5) + 2;
-            const a = Math.floor(Math.random() * 5) + 1;
-            const b = a * x;
-            const c = Math.floor(Math.random() * 5) + 1;
-            return { latex: `If\\ \\ ${a} : ${c} = ${b} : x,\\ \\ find\\ x.`, answer: c * x };
+            const ans = a + (b * c);
+            return { 
+              latex: `Evaluate:\\ \\ ${a} + (${b} \\times ${c})`, 
+              answer: ans,
+              working: `1.\\ \\text{Perform multiplication first: } ${b} \\times ${c} = ${b * c}\\\\ 2.\\ \\text{Add to } ${a}: ${a} + ${b * c} = ${ans}`
+            };
           }
         },
         ch6: {
@@ -104,16 +106,12 @@
             const x = Math.floor(Math.random() * 10) + 1;
             const a = Math.floor(Math.random() * 5) + 2;
             const b = Math.floor(Math.random() * 10) + 1;
-            return { latex: `Solve:\\ \\ ${a}x + ${b} = ${a * x + b}`, answer: x };
-          }
-        },
-        ch10: {
-          title: "Ch 10: Perimeter and Area",
-          type: "numeric",
-          generate: () => {
-            const l = Math.floor(Math.random() * 10) + 2;
-            const w = Math.floor(Math.random() * 8) + 2;
-            return { latex: `Find\\ area\\ of\\ rectangle\\ with\\ l = ${l}\\ cm\\ and\\ w = ${w}\\ cm.`, answer: l * w };
+            const c = a * x + b;
+            return { 
+              latex: `Solve:\\ \\ ${a}x + ${b} = ${c}`, 
+              answer: x,
+              working: `1.\\ \\text{Subtract } ${b} \\text{ from both sides: } ${a}x = ${c} - ${b} = ${c - b}\\\\ 2.\\ \\text{Divide by } ${a}: x = \\frac{${c - b}}{${a}} = ${x}`
+            };
           }
         }
       },
@@ -125,29 +123,13 @@
           generate: () => {
             const a = Math.floor(Math.random() * 5) + 2;
             const b = Math.floor(Math.random() * 5) + 1;
+            const ans = `${a}x + ${a * b}`;
             return {
               latex: `Expand:\\ \\ ${a}(x + ${b})`,
-              answer: `${a}x + ${a * b}`,
-              options: [`${a}x + ${a * b}`, `${a}x + ${b}`, `${a}x - ${a * b}`, `x + ${a * b}`]
+              answer: ans,
+              options: [ans, `${a}x + ${b}`, `${a}x - ${a * b}`, `x + ${a * b}`],
+              working: `1.\\ \\text{Multiply } ${a} \\text{ with } x: ${a} \\times x = ${a}x\\\\ 2.\\ \\text{Multiply } ${a} \\text{ with } ${b}: ${a} \\times ${b} = ${a * b}\\\\ 3.\\ \\text{Combine: } ${a}x + ${a * b}`
             };
-          }
-        },
-        ch3: {
-          title: "Ch 3: Algebraic Formulae",
-          type: "numeric",
-          generate: () => {
-            const u = Math.floor(Math.random() * 10) + 1;
-            const a = Math.floor(Math.random() * 5) + 1;
-            const t = 2;
-            return { latex: `Given\\ v = u + at.\\ Find\\ v\\ when\\ u = ${u},\\ a = ${a},\\ t = ${t}.`, answer: u + (a * t) };
-          }
-        },
-        ch7: {
-          title: "Ch 7: Circles (Circumference)",
-          type: "numeric",
-          generate: () => {
-            const r = (Math.floor(Math.random() * 4) + 1) * 7;
-            return { latex: `Find\\ circumference\\ of\\ circle\\ r = ${r}\\ cm.\\ (Use\\ \\pi = \\frac{22}{7})`, answer: 2 * (22 / 7) * r };
           }
         },
         ch13: {
@@ -156,53 +138,28 @@
           generate: () => {
             const triples = [[3,4,5], [5,12,13], [6,8,10], [8,15,17]];
             const [a, b, c] = triples[Math.floor(Math.random() * triples.length)];
-            return { latex: `Right\\ triangle\\ legs\\ a=${a}\\ and\\ b=${b}.\\ Find\\ hypotenuse\\ c.`, answer: c };
+            return { 
+              latex: `Right\\ triangle\\ legs\\ a=${a}\\ and\\ b=${b}.\\ Find\\ hypotenuse\\ c.`, 
+              answer: c,
+              working: `1.\\ \\text{Use formula: } c = \\sqrt{a^2 + b^2}\\\\ 2.\\ \\text{Substitute: } c = \\sqrt{${a}^2 + ${b}^2} = \\sqrt{${a*a} + ${b*b}} = \\sqrt{${c*c}}\\\\ 3.\\ \\text{Answer: } c = ${c}`
+            };
           }
         }
       },
 
       form3: {
         ch1: {
-          title: "Ch 1: Indices (Laws of Multiplication)",
+          title: "Ch 1: Indices (a^m × a^n)",
           type: "numeric",
           generate: () => {
             const base = Math.floor(Math.random() * 4) + 2;
             const m = Math.floor(Math.random() * 4) + 2;
             const n = Math.floor(Math.random() * 4) + 2;
-            return { latex: `Simplify:\\ \\ ${base}^{${m}} \\times ${base}^{${n}} = ${base}^x \\quad (Find\\ x)`, answer: m + n };
-          }
-        },
-        ch2: {
-          title: "Ch 2: Standard Form",
-          type: "mcq",
-          generate: () => {
-            const a = Math.floor(Math.random() * 9) + 1;
-            const b = Math.floor(Math.random() * 9) + 1;
-            const p = Math.floor(Math.random() * 3) + 2;
-            const num = (a + b / 10) * Math.pow(10, p);
-            const ans = `${a}.${b} \\times 10^{${p}}`;
-            return {
-              latex: `Express\\ ${num}\\ in\\ standard\\ form.`,
-              answer: ans,
-              options: [ans, `${a}${b} \\times 10^{${p - 1}}`, `${a}.${b} \\times 10^{${p + 1}}`, `0.${a}${b} \\times 10^{${p + 1}}`]
+            return { 
+              latex: `Simplify:\\ \\ ${base}^{${m}} \\times ${base}^{${n}} = ${base}^x \\quad (Find\\ x)`, 
+              answer: m + n,
+              working: `1.\\ \\text{Use rule } a^m \\times a^n = a^{m+n}\\\\ 2.\\ \\text{Add powers: } x = ${m} + ${n} = ${m + n}`
             };
-          }
-        },
-        ch3: {
-          title: "Ch 3: Consumer Math (Savings & Interest)",
-          type: "numeric",
-          generate: () => {
-            const p = 1000;
-            const r = Math.floor(Math.random() * 3) + 2; // rate %
-            const t = 2; // years
-            return { latex: `Find\\ simple\\ interest\\ for\\ Principal = RM${p},\\ Rate = ${r}\\%,\\ Time = ${t}\\ years.`, answer: (p * r * t) / 100 };
-          }
-        },
-        ch5: {
-          title: "Ch 5: Trigonometric Ratios (Tangent)",
-          type: "numeric",
-          generate: () => {
-            return { latex: `In\\ a\\ right\\ triangle,\\ opposite = 3\\ and\\ adjacent = 4.\\ Find\\ \\tan(\\theta)\\ as\\ a\\ decimal.`, answer: 0.75 };
           }
         }
       },
@@ -214,48 +171,65 @@
           generate: () => {
             const r1 = Math.floor(Math.random() * 4) + 1;
             const r2 = Math.floor(Math.random() * 4) + 5;
+            const sum = r1 + r2;
+            const prod = r1 * r2;
             return {
-              latex: `Find\\ roots\\ of:\\ \\ x^2 - ${r1 + r2}x + ${r1 * r2} = 0`,
+              latex: `Find\\ roots\\ of:\\ \\ x^2 - ${sum}x + ${prod} = 0`,
               answer: `${r1}, ${r2}`,
-              options: [`${r1}, ${r2}`, `-${r1}, ${r2}`, `${r1}, -${r2}`, `-${r1}, -${r2}`]
+              options: [`${r1}, ${r2}`, `-${r1}, ${r2}`, `${r1}, -${r2}`, `-${r1}, -${r2}`],
+              working: `1.\\ \\text{Factorise: } (x - ${r1})(x - ${r2}) = 0\\\\ 2.\\ \\text{Solve roots: } x = ${r1}\\ \\text{or } x = ${r2}`
             };
           }
         },
-        ch2: {
-          title: "Ch 2: Number Bases (Base 10 to Base 2)",
+        ch3_insurance: {
+          title: "Ch 3: Consumer Math (Insurance Payout)",
           type: "numeric",
           generate: () => {
-            const num10 = Math.floor(Math.random() * 20) + 5;
-            return { latex: `Convert\\ ${num10}_{10}\\ to\\ Base\\ 2.`, answer: parseInt(num10.toString(2)) };
+            const loss = (Math.floor(Math.random() * 8) + 3) * 1000;
+            const deductible = (Math.floor(Math.random() * 4) + 1) * 500;
+            const payout = loss - deductible;
+
+            return {
+              latex: `A\\ property\\ suffers\\ a\\ loss\\ of\\ \\text{RM } ${loss}.\\ \\text{If policy deductible is RM } ${deductible},\\ \\text{calculate payout.}`,
+              answer: payout,
+              working: `1.\\ \\text{Formula: Compensation} = \\text{Loss Amount} - \\text{Deductible}\\\\ 2.\\ \\text{Substitute: RM } ${loss} - \\text{RM } ${deductible}\\\\ 3.\\ \\text{Answer: RM } ${payout}`
+            };
           }
         },
-        ch3: {
-          title: "Ch 3: Consumer Math (Insurance)",
+        ch4_sets: {
+          title: "Ch 4: Operations on Sets n(A ∩ B)",
           type: "numeric",
           generate: () => {
-            const loss = 5000;
-            const deductible = 1000;
-            return { latex: `Property\\ loss = RM${loss}.\\ Deductible = RM${deductible}.\\ Calculate\\ insurance\\ payout.`, answer: loss - deductible };
-          }
-        },
-        ch8: {
-          title: "Ch 8: Measures of Dispersion (Range)",
-          type: "numeric",
-          generate: () => {
-            const nums = [12, 45, 23, 89, 34];
-            return { latex: `Find\\ the\\ range\\ of\\ data:\\ 12,\\ 45,\\ 23,\\ 89,\\ 34.`, answer: 89 - 12 };
+            const nA = Math.floor(Math.random() * 10) + 15;
+            const nB = Math.floor(Math.random() * 10) + 10;
+            const nIntersection = Math.floor(Math.random() * 5) + 3;
+            const nUnion = nA + nB - nIntersection;
+
+            return {
+              latex: `\\text{Given set } A \\text{ and set } B \\text{ in universal set } \\xi.\\\\ \\text{If } n(A) = ${nA},\\ n(B) = ${nB},\\ \\text{and } n(A \\cup B) = ${nUnion},\\ \\text{find } n(A \\cap B).`,
+              answer: nIntersection,
+              working: `1.\\ \\text{Formula: } n(A \\cup B) = n(A) + n(B) - n(A \\cap B)\\\\ 2.\\ \\text{Substitute: } ${nUnion} = ${nA} + ${nB} - n(A \\cap B)\\\\ 3.\\ \\text{Simplify: } ${nUnion} = ${nA + nB} - n(A \\cap B)\\\\ 4.\\ \\text{Solve: } n(A \\cap B) = ${nA + nB} - ${nUnion} = ${nIntersection}`
+            };
           }
         }
       },
 
       form5: {
-        ch1: {
-          title: "Ch 1: Variation (Direct Variation)",
+        ch1_variation: {
+          title: "Ch 1: Inverse Variation (y ∝ 1/x)",
           type: "numeric",
           generate: () => {
-            const k = Math.floor(Math.random() * 5) + 2;
-            const x = Math.floor(Math.random() * 5) + 1;
-            return { latex: `y\\ \\propto\\ x\\ with\\ constant\\ k = ${k}.\\ Find\\ y\\ when\\ x = ${x}.`, answer: k * x };
+            const k = (Math.floor(Math.random() * 5) + 2) * 6;
+            const x1 = Math.floor(Math.random() * 4) + 2;
+            const y1 = k / x1;
+            const x2 = Math.floor(Math.random() * 4) + 2;
+            const y2 = k / x2;
+
+            return {
+              latex: `Given\\ y\\ \\text{varies inversely as } x.\\ \\text{If } y = ${y1}\\ \\text{when } x = ${x1},\\ \\text{find } y\\ \\text{when } x = ${x2}.`,
+              answer: y2,
+              working: `1.\\ \\text{Write relation: } y = \\frac{k}{x}\\\\ 2.\\ \\text{Find constant } k: k = y \\times x = ${y1} \\times ${x1} = ${k}\\\\ 3.\\ \\text{Calculate new } y: y = \\frac{${k}}{${x2}} = ${y2}`
+            };
           }
         },
         ch2: {
@@ -266,16 +240,29 @@
             const b = Math.floor(Math.random() * 4) + 1;
             const c = Math.floor(Math.random() * 4) + 1;
             const d = Math.floor(Math.random() * 4) + 1;
-            return { latex: `Find\\ determinant\\ of\\ \\begin{pmatrix} ${a} & ${b} \\\\ ${c} & ${d} \\end{pmatrix}`, answer: (a*d) - (b*c) };
+            const det = (a * d) - (b * c);
+            return { 
+              latex: `Find\\ determinant\\ of\\ \\begin{pmatrix} ${a} & ${b} \\\\ ${c} & ${d} \\end{pmatrix}`, 
+              answer: det,
+              working: `1.\\ \\text{Formula: det} = (a)(d) - (b)(c)\\\\ 2.\\ \\text{Calculate: } (${a})(${d}) - (${b})(${c}) = ${a*d} - ${b*c} = ${det}`
+            };
           }
         },
-        ch4: {
-          title: "Ch 4: Consumer Math (Taxation)",
+        ch4_income_tax: {
+          title: "Ch 4: Consumer Math (Income Tax - Chargeable Income)",
           type: "numeric",
           generate: () => {
-            const income = 40000;
-            const relief = 9000;
-            return { latex: `Chargeable\\ Income = RM${income} - RM${relief}.\\ Calculate\\ Chargeable\\ Income.`, answer: income - relief };
+            const annualIncome = (Math.floor(Math.random() * 20) + 40) * 1000;
+            const individualRelief = 9000;
+            const lifestyleRelief = (Math.floor(Math.random() * 3) + 1) * 500;
+            const totalRelief = individualRelief + lifestyleRelief;
+            const chargeableIncome = annualIncome - totalRelief;
+
+            return {
+              latex: `\\text{Encik Azman has annual income of RM } ${annualIncome}.\\\\ \\text{His tax reliefs are RM } ${individualRelief} \\text{ (individual) and RM } ${lifestyleRelief} \\text{ (lifestyle).}\\\\ \\text{Calculate his chargeable income.}`,
+              answer: chargeableIncome,
+              working: `1.\\ \\text{Formula: Chargeable Income} = \\text{Total Income} - \\text{Total Reliefs}\\\\ 2.\\ \\text{Calculate Total Reliefs: RM } ${individualRelief} + \\text{RM } ${lifestyleRelief} = \\text{RM } ${totalRelief}\\\\ 3.\\ \\text{Calculate Chargeable Income: RM } ${annualIncome} - \\text{RM } ${totalRelief} = \\text{RM } ${chargeableIncome}`
+            };
           }
         }
       }
@@ -306,12 +293,14 @@
       if (!topic) return;
 
       currentQuestion = topic.generate();
+      answeredCurrent = false;
 
       const questionBox = document.getElementById('questionBox');
       const numericArea = document.getElementById('numericInputArea');
       const mcqArea = document.getElementById('mcqArea');
       document.getElementById('feedback').innerText = '';
       document.getElementById('userAnswer').value = '';
+      document.getElementById('workingArea').style.display = 'none';
 
       katex.render(currentQuestion.latex, questionBox);
 
@@ -336,18 +325,48 @@
 
     function checkAnswer(userAns) {
       const feedback = document.getElementById('feedback');
-      if (userAns === null || userAns === undefined || String(userAns).trim() === '') {
+      if (userAns === null || userAns === undefined || String(userAns).trim() === '' || Number.isNaN(userAns)) {
         feedback.innerText = "Please enter an answer.";
         feedback.style.color = "orange";
         return;
       }
 
-      if (String(userAns) === String(currentQuestion.answer)) {
-        feedback.innerText = "Correct! Great job! 🎉";
-        feedback.style.color = "green";
+      if (!answeredCurrent) {
+        total++;
+        if (String(userAns) === String(currentQuestion.answer)) {
+          score++;
+          feedback.innerText = "Correct! Great job! 🎉";
+          feedback.style.color = "green";
+        } else {
+          feedback.innerText = `Incorrect. The answer is ${currentQuestion.answer}.`;
+          feedback.style.color = "red";
+        }
+        answeredCurrent = true;
+        updateScoreBoard();
+        showWorking();
+      }
+    }
+
+    function updateScoreBoard() {
+      document.getElementById('score').innerText = score;
+      document.getElementById('total').innerText = total;
+      const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+      document.getElementById('accuracy').innerText = accuracy;
+    }
+
+    function showWorking() {
+      const workingArea = document.getElementById('workingArea');
+      const workingContent = document.getElementById('workingContent');
+      workingArea.style.display = 'block';
+      katex.render(currentQuestion.working, workingContent);
+    }
+
+    function toggleWorking() {
+      const workingArea = document.getElementById('workingArea');
+      if (workingArea.style.display === 'block') {
+        workingArea.style.display = 'none';
       } else {
-        feedback.innerText = `Incorrect. The answer is ${currentQuestion.answer}.`;
-        feedback.style.color = "red";
+        showWorking();
       }
     }
 
