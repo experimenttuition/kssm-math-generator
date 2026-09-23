@@ -28,6 +28,7 @@
     .reset-alert { background: #d4edda; color: #155724; padding: 10px; border-radius: 6px; text-align: center; margin-top: 10px; display: none; font-weight: bold; }
     .working-steps { margin-top: 20px; padding: 15px; background: #f8f9fa; border-left: 4px solid #007bff; border-radius: 4px; display: none; }
     .working-steps h4 { margin-top: 0; color: #007bff; }
+    .current-tag { font-size: 14px; color: #555; text-align: center; font-style: italic; margin-bottom: 5px; }
   </style>
 </head>
 <body>
@@ -44,8 +45,9 @@
     <div class="reset-alert" id="resetAlert">🎉 Set completed! Score reset for the next 10 questions.</div>
     
     <div class="filter-group">
-      <label for="formSelect">Form:</label>
+      <label for="formSelect">Mode / Form:</label>
       <select id="formSelect" onchange="updateTopicDropdown()">
+        <option value="mixed">🔀 Mixed Mode (All Chapters)</option>
         <option value="form1">Form 1</option>
         <option value="form2">Form 2</option>
         <option value="form3">Form 3</option>
@@ -57,6 +59,7 @@
       <select id="topicSelect" onchange="generateQuestion()"></select>
     </div>
 
+    <div class="current-tag" id="currentTag"></div>
     <div class="question-box" id="questionBox">Select a topic to start!</div>
 
     <div id="numericInputArea">
@@ -93,7 +96,7 @@
     const Syllabus = {
       form1: {
         ch1: {
-          title: "Ch 1: Rational Numbers",
+          title: "Form 1 Ch 1: Rational Numbers",
           type: "numeric",
           generate: () => {
             const a = getRandomInt(-50, 50);
@@ -108,7 +111,7 @@
           }
         },
         ch6: {
-          title: "Ch 6: Linear Equations",
+          title: "Form 1 Ch 6: Linear Equations",
           type: "numeric",
           generate: () => {
             const x = getRandomInt(-20, 20);
@@ -126,7 +129,7 @@
 
       form2: {
         ch2: {
-          title: "Ch 2: Expansion of Algebraic Expressions",
+          title: "Form 2 Ch 2: Expansion of Algebraic Expressions",
           type: "mcq",
           generate: () => {
             const a = getRandomInt(2, 15);
@@ -141,7 +144,7 @@
           }
         },
         ch13: {
-          title: "Ch 13: Pythagoras Theorem",
+          title: "Form 2 Ch 13: Pythagoras Theorem",
           type: "numeric",
           generate: () => {
             const m = getRandomInt(2, 6);
@@ -160,7 +163,7 @@
 
       form3: {
         ch1: {
-          title: "Ch 1: Indices (a^m × a^n)",
+          title: "Form 3 Ch 1: Indices (a^m × a^n)",
           type: "numeric",
           generate: () => {
             const base = getRandomInt(2, 10);
@@ -174,7 +177,7 @@
           }
         },
         ch5_trigo: {
-          title: "Ch 5: Trigonometry (Sin, Cos, Tan)",
+          title: "Form 3 Ch 5: Trigonometry (Sin, Cos, Tan)",
           type: "numeric",
           generate: () => {
             const triples = [
@@ -215,7 +218,7 @@
 
       form4: {
         ch1: {
-          title: "Ch 1: Quadratic Equations",
+          title: "Form 4 Ch 1: Quadratic Equations",
           type: "mcq",
           generate: () => {
             const r1 = getRandomInt(1, 12);
@@ -231,7 +234,7 @@
           }
         },
         ch2_number_bases: {
-          title: "Ch 2: Number Bases (Base 10 to Base 2)",
+          title: "Form 4 Ch 2: Number Bases (Base 10 to Base 2)",
           type: "numeric",
           generate: () => {
             const num10 = getRandomInt(10, 60);
@@ -255,7 +258,7 @@
           }
         },
         ch3_insurance: {
-          title: "Ch 3: Consumer Math (Insurance Payout)",
+          title: "Form 4 Ch 3: Consumer Math (Insurance Payout)",
           type: "numeric",
           generate: () => {
             const loss = getRandomInt(3, 50) * 1000;
@@ -270,7 +273,7 @@
           }
         },
         ch4_sets: {
-          title: "Ch 4: Operations on Sets n(A ∩ B)",
+          title: "Form 4 Ch 4: Operations on Sets n(A ∩ B)",
           type: "numeric",
           generate: () => {
             const nA = getRandomInt(15, 50);
@@ -289,7 +292,7 @@
 
       form5: {
         ch1_variation: {
-          title: "Ch 1: Inverse Variation (y ∝ 1/x)",
+          title: "Form 5 Ch 1: Inverse Variation (y ∝ 1/x)",
           type: "numeric",
           generate: () => {
             const k = getRandomInt(2, 10) * 12;
@@ -306,7 +309,7 @@
           }
         },
         ch2: {
-          title: "Ch 2: Matrices (Determinant)",
+          title: "Form 5 Ch 2: Matrices (Determinant)",
           type: "numeric",
           generate: () => {
             const a = getRandomInt(1, 10);
@@ -322,7 +325,7 @@
           }
         },
         ch4_income_tax: {
-          title: "Ch 4: Consumer Math (Income Tax - Chargeable Income)",
+          title: "Form 5 Ch 4: Consumer Math (Income Tax - Chargeable Income)",
           type: "numeric",
           generate: () => {
             const annualIncome = getRandomInt(30, 90) * 1000;
@@ -346,34 +349,56 @@
       const topicSelect = document.getElementById('topicSelect');
       topicSelect.innerHTML = '';
 
-      const topics = Syllabus[formKey];
-      for (let key in topics) {
+      if (formKey === 'mixed') {
+        topicSelect.disabled = true;
         const opt = document.createElement('option');
-        opt.value = key;
-        opt.innerText = topics[key].title;
+        opt.innerText = "All Chapters (Random Selection)";
         topicSelect.appendChild(opt);
+      } else {
+        topicSelect.disabled = false;
+        const topics = Syllabus[formKey];
+        for (let key in topics) {
+          const opt = document.createElement('option');
+          opt.value = key;
+          opt.innerText = topics[key].title;
+          topicSelect.appendChild(opt);
+        }
       }
       generateQuestion();
     }
 
     function generateQuestion() {
       document.getElementById('resetAlert').style.display = 'none';
+      const formMode = document.getElementById('formSelect').value;
+      let topic = null;
+      let topicTitle = "";
 
-      const formKey = document.getElementById('formSelect').value;
-      const topicSelect = document.getElementById('topicSelect');
-      let topicKey = topicSelect.value;
-
-      if (!topicKey && topicSelect.options.length > 0) {
-        topicKey = topicSelect.options[0].value;
-        topicSelect.value = topicKey;
+      if (formMode === 'mixed') {
+        const formKeys = ['form1', 'form2', 'form3', 'form4', 'form5'];
+        const randomFormKey = formKeys[getRandomInt(0, formKeys.length - 1)];
+        const formTopics = Syllabus[randomFormKey];
+        const topicKeys = Object.keys(formTopics);
+        const randomTopicKey = topicKeys[getRandomInt(0, topicKeys.length - 1)];
+        
+        topic = formTopics[randomTopicKey];
+        topicTitle = topic.title;
+      } else {
+        const topicSelect = document.getElementById('topicSelect');
+        let topicKey = topicSelect.value;
+        if (!topicKey && topicSelect.options.length > 0) {
+          topicKey = topicSelect.options[0].value;
+          topicSelect.value = topicKey;
+        }
+        topic = Syllabus[formMode]?.[topicKey];
+        topicTitle = topic ? topic.title : "";
       }
 
-      const topic = Syllabus[formKey]?.[topicKey];
       if (!topic) return;
 
       currentQuestion = topic.generate();
       answeredCurrent = false;
 
+      document.getElementById('currentTag').innerText = formMode === 'mixed' ? `Topic: ${topicTitle}` : "";
       const questionBox = document.getElementById('questionBox');
       const numericArea = document.getElementById('numericInputArea');
       const mcqArea = document.getElementById('mcqArea');
